@@ -34,3 +34,23 @@ test("register", async () => {
   expect(registerRes.status).toBe(200);
   expectValidJwt(registerRes.body.token);
 });
+
+test("register missing fields fails", async () => {
+  const registerRes = await request(app).post("/api/auth");
+  expect(registerRes.status).toBe(400);
+});
+
+test("logout", async () => {
+  const logoutRes = await request(app)
+    .delete("/api/auth")
+    .set("Authorization", `Bearer ${testUserAuthToken}`);
+  expect(logoutRes.status).toBe(200);
+  console.log(logoutRes.body);
+  expect(logoutRes.body).toMatchObject({ message: "logout successful" });
+});
+
+test("logout without token fails", async () => {
+  const logoutRes = await request(app).delete("/api/auth");
+  expect(logoutRes.status).toBe(401);
+  expect(logoutRes.body).toMatchObject({ message: "unauthorized" });
+});
