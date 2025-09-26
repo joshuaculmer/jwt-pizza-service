@@ -1,5 +1,13 @@
 const request = require("supertest");
 const app = require("../service");
+const {
+  jestTimeoutVSCodeIncrease,
+  expectValidJwt,
+  randomUser,
+} = require("../testhelper");
+
+// Increase timeout for debugging in VSCode
+jestTimeoutVSCodeIncrease();
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
@@ -26,21 +34,3 @@ test("register", async () => {
   expect(registerRes.status).toBe(200);
   expectValidJwt(registerRes.body.token);
 });
-
-function expectValidJwt(potentialJwt) {
-  expect(potentialJwt).toMatch(
-    /^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/
-  );
-}
-
-function randomUser() {
-  return {
-    name: randomName(),
-    email: Math.random().toString(36).substring(2, 12) + "@test.com",
-    password: "a",
-  };
-}
-
-function randomName() {
-  return Math.random().toString(36).substring(2, 12);
-}
