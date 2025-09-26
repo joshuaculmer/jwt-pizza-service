@@ -3,6 +3,10 @@ const app = require("./service");
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
+const { jestTimeoutVSCodeIncrease, expectValidJwt } = require("./testhelper");
+
+// Increase timeout for debugging in VSCode
+jestTimeoutVSCodeIncrease();
 
 beforeAll(async () => {
   testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
@@ -22,9 +26,3 @@ test("login", async () => {
   expect(loginRes.body.user).toMatchObject(user);
   expect(testUser.password).toMatch(password);
 });
-
-function expectValidJwt(potentialJwt) {
-  expect(potentialJwt).toMatch(
-    /^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/
-  );
-}
