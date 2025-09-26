@@ -1,0 +1,50 @@
+const request = require("supertest");
+const app = require("../service");
+const {
+  jestTimeoutVSCodeIncrease,
+  expectValidJwt,
+  randomUser,
+} = require("../testhelper");
+
+// Increase timeout for debugging in VSCode
+jestTimeoutVSCodeIncrease();
+
+const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
+let testUserAuthToken;
+
+beforeAll(async () => {
+  // testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
+  const registerRes = await request(app).post("/api/auth").send(testUser);
+  testUserAuthToken = registerRes.body.token;
+  expectValidJwt(testUserAuthToken);
+});
+
+afterAll(async () => {
+  // logout test user
+  await request(app)
+    .delete("/api/auth")
+    .set("Authorization", `Bearer ${testUserAuthToken}`);
+});
+
+test("get me", async () => {
+  const getMeRes = await request(app)
+    .get("/api/user/me")
+    .set("Authorization", `Bearer ${testUserAuthToken}`);
+  expect(getMeRes.status).toBe(200);
+  expect(getMeRes.body).toMatchObject({
+    name: testUser.name,
+    email: testUser.email,
+    roles: [{ role: "diner" }],
+  });
+});
+
+test("update user not admin", async () => {
+  const newName = "updated name";
+  const userId = 1; // Assuming testUser has ID 1; adjust as necessary
+  const updateRes = await request(app)
+    .put(`/api/user/${userId}`)
+    .send({ name: newName })
+    .set("Authorization", `Bearer ${testUserAuthToken}`);
+  expect(updateRes.status).toBe(403); // Expecting forbidden
+  expect(updateRes.body).toMatchObject({ message: "unauthorized" });
+});
