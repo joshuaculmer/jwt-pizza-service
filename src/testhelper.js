@@ -1,3 +1,14 @@
+async function createAdminUser() {
+  const { Role, DB } = require("./database/database.js");
+
+  let user = { password: "toomanysecrets", roles: [{ role: Role.Admin }] };
+  user.name = randomName();
+  user.email = user.name + "@admin.com";
+
+  user = await DB.addUser(user);
+  return { ...user, password: "toomanysecrets" };
+}
+
 function jestTimeoutVSCodeIncrease() {
   if (process.env.VSCODE_INSPECTOR_OPTIONS) {
     jest.setTimeout(60 * 1000 * 5); // 5 minutes
@@ -27,4 +38,5 @@ module.exports = {
   randomUser,
   randomName,
   jestTimeoutVSCodeIncrease,
+  createAdminUser,
 };

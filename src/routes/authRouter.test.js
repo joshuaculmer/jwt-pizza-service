@@ -19,6 +19,13 @@ beforeAll(async () => {
   expectValidJwt(testUserAuthToken);
 });
 
+afterAll(async () => {
+  // logout test user
+  await request(app)
+    .delete("/api/auth")
+    .set("Authorization", `Bearer ${testUserAuthToken}`);
+});
+
 test("login", async () => {
   const loginRes = await request(app).put("/api/auth").send(testUser);
   expect(loginRes.status).toBe(200);
