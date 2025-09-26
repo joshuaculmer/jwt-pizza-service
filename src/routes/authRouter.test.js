@@ -1,5 +1,5 @@
 const request = require("supertest");
-const app = require("./service");
+const app = require("../service");
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
@@ -14,13 +14,11 @@ beforeAll(async () => {
 test("login", async () => {
   const loginRes = await request(app).put("/api/auth").send(testUser);
   expect(loginRes.status).toBe(200);
-  expect(loginRes.body.token).toMatch(
-    /^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/
-  );
+  expectValidJwt(loginRes.body.token);
 
-  const { password, ...user } = { ...testUser, roles: [{ role: "diner" }] };
-  expect(loginRes.body.user).toMatchObject(user);
-  expect(testUser.password).toMatch(password);
+  const expectedUser = { ...testUser, roles: [{ role: "diner" }] };
+  delete expectedUser.password;
+  expect(loginRes.body.user).toMatchObject(expectedUser);
 });
 
 function expectValidJwt(potentialJwt) {
