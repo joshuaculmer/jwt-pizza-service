@@ -4,6 +4,7 @@ const {
   jestTimeoutVSCodeIncrease,
   expectValidJwt,
   randomUser,
+  createAdminUser,
 } = require("../testhelper");
 
 // Increase timeout for debugging in VSCode
@@ -60,4 +61,17 @@ test("logout without token fails", async () => {
   const logoutRes = await request(app).delete("/api/auth");
   expect(logoutRes.status).toBe(401);
   expect(logoutRes.body).toMatchObject({ message: "unauthorized" });
+});
+
+test("login admin user", async () => {
+  const adminUser = await createAdminUser();
+  const registerRes = await request(app).post("/api/auth").send(adminUser);
+  const adminUserAuthToken = registerRes.body.token;
+  expectValidJwt(adminUserAuthToken);
+  const loginRes = await request(app).put("/api/auth").send(adminUser);
+  expect(loginRes.status).toBe(200);
+  expectValidJwt(loginRes.body.token);
+  const expectedUser = { ...adminUser, roles: [{ role: "admin" }] };
+  delete expectedUser.password;
+  expect(loginRes.body.user).toMatchObject(expectedUser);
 });
