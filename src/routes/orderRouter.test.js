@@ -19,18 +19,33 @@ beforeAll(async () => {
   const registerRes = await request(app).post("/api/auth").send(testUser);
   testUserAuthToken = registerRes.body.token;
   expectValidJwt(testUserAuthToken);
-
+  // create admin user
   adminUser = await createAdminUser();
-  const registerAdminRes = await request(app).post("/api/auth").send(adminUser);
-  adminUserAuthToken = registerAdminRes.body.token;
-  expectValidJwt(adminUserAuthToken);
 
+  // login admin user
   const loginRes = await request(app).put("/api/auth").send(adminUser);
-  expect(loginRes.status).toBe(200);
-  expectValidJwt(loginRes.body.token);
+  adminUserAuthToken = loginRes.body.token;
+  expectValidJwt(adminUserAuthToken);
 });
 
+const addTheHorrors = async () => {
+  const newMenuItem = {
+    title: "The Horrors",
+    description: "pineapple on pizza :O",
+    image: "pizza1.png",
+    price: 1,
+  };
+  const addMenuRes = await request(app)
+    .put(`/api/order/menu`)
+    .set("Authorization", `Bearer ${adminUserAuthToken}`)
+    .send(newMenuItem);
+  return addMenuRes;
+};
+
 test("Get pizza menu", async () => {
+  const addMenuRes = await addTheHorrors();
+  expect(addMenuRes.status).toBe(200);
+
   const getMenuRes = await request(app).get(`/api/order/menu`);
   expect(getMenuRes.status).toBe(200);
   // console.log(getMenuRes.body);
@@ -47,19 +62,10 @@ test("Add menu item unauthorized", async () => {
   expect(addMenuRes.body.message).toBe("unable to add menu item");
 });
 
-// test("Add menu item as admin", async () => {
-//   const newMenuItem = {
-//     title: "The Horrors",
-//     description: "pineapple on pizza :O",
-//     image: "pizza1.png",
-//     price: 1,
-//   };
-//   const addMenuRes = await request(app)
-//     .put(`/api/order/menu`)
-//     .set("Authorization", `Bearer ${adminUserAuthToken}`)
-//     .send(newMenuItem);
-//   expect(addMenuRes.status).toBe(200);
-// });
+test("Add menu item as admin", async () => {
+  addMenuRes = await addTheHorrors();
+  expect(addMenuRes.status).toBe(200);
+});
 
 test("Make an order", async () => {
   const newOrder = {
