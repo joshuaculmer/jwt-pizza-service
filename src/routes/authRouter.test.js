@@ -65,12 +65,10 @@ test("logout without token fails", async () => {
 
 test("login admin user", async () => {
   const adminUser = await createAdminUser();
-  const registerRes = await request(app).post("/api/auth").send(adminUser);
-  const adminUserAuthToken = registerRes.body.token;
-  expectValidJwt(adminUserAuthToken);
   const loginRes = await request(app).put("/api/auth").send(adminUser);
   expect(loginRes.status).toBe(200);
   expectValidJwt(loginRes.body.token);
+  const adminUserAuthToken = loginRes.body.token; 
   const expectedUser = adminUser;
   delete expectedUser.password;
   expect(loginRes.body.user).toMatchObject(expectedUser);

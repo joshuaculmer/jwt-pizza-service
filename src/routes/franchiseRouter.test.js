@@ -32,9 +32,9 @@ beforeAll(async () => {
   // create admin user
   adminUser = await createAdminUser();
 
-  // register admin user
-  const adminRegisterRes = await request(app).post("/api/auth").send(adminUser);
-  adminUserAuthToken = adminRegisterRes.body.token;
+  // login admin user
+  const loginRes = await request(app).put("/api/auth").send(adminUser);
+  const adminUserAuthToken = loginRes.body.token;
   expectValidJwt(adminUserAuthToken);
 
   // create test franchise object
