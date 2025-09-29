@@ -30,7 +30,7 @@ beforeAll(async () => {
 
   // login admin user
   const loginRes = await request(app).put("/api/auth").send(adminUser);
-  const adminUserAuthToken = loginRes.body.token;
+  adminUserAuthToken = loginRes.body.token;
   expectValidJwt(adminUserAuthToken);
 
   // create test franchise object
@@ -79,7 +79,7 @@ test("Get franchises", async () => {
 });
 
 test("Get test user franchises unauthorized", async () => {
-  console.log(testUserAuthToken);
+  // console.log(testUserAuthToken);
   const testUserId = 1; // change this later once I figure out what userId is
   const getFranchiseRes = await request(app)
     .get(`/api/franchise/${testUserId}`)
@@ -112,10 +112,27 @@ test("Create a store not admin", async () => {
   // expect(createStoreRes.body.name).toBe(testStore.name);
 });
 
+test("Create a store admin", async () => {
+  const createStoreRes = await request(app)
+    .post(`/api/franchise/${testFranchiseId}/store`)
+    .set("Authorization", `Bearer ${adminUserAuthToken}`)
+    .send(testStore);
+  expect(createStoreRes.status).toBe(200);
+  expect(createStoreRes.body.name).toBe(testStore.name);
+});
+
 test("Delete a store not admin", async () => {
   const deleteStoreRes = await request(app)
     .delete(`/api/franchise/${testFranchiseId}/store/${testStoreId}`)
     .set("Authorization", `Bearer ${testUserAuthToken}`);
   expect(deleteStoreRes.status).toBe(403);
   // expect(deleteStoreRes.body.name).toBe(testStore.name);
+});
+
+test("Delete a store admin", async () => {
+  const deleteStoreRes = await request(app)
+    .delete(`/api/franchise/${testFranchiseId}/store/${testStoreId}`)
+    .set("Authorization", `Bearer ${adminUserAuthToken}`);
+  expect(deleteStoreRes.status).toBe(200);
+  expect(deleteStoreRes.body.message).toBe("store deleted");
 });
