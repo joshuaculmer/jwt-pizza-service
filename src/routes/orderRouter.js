@@ -127,8 +127,10 @@ orderRouter.post(
       }),
     });
     const j = await r.json();
-    console.log("j:" + j);
-    console.log("r:" + r);
+    // console.log("j:" + j.reportUrl + " " + j.jwt);
+    // console.log("r:" + r.ok);
+    // Had a 500 error here once when the factory was down potentially
+    // talked with Danika on September 29th 2025
     if (r.ok) {
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
     } else {
