@@ -63,7 +63,7 @@ test("Add menu item unauthorized", async () => {
 });
 
 test("Add menu item as admin", async () => {
-  addMenuRes = await addTheHorrors();
+  const addMenuRes = await addTheHorrors();
   expect(addMenuRes.status).toBe(200);
 });
 
