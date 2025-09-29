@@ -5,8 +5,10 @@ async function createAdminUser() {
   user.name = randomName();
   user.email = user.name + "@admin.com";
 
-  user = await DB.addUser(user);
-  return { ...user, password: "toomanysecrets" };
+  console.log(user);
+  await DB.addUser(user);
+  user.password = "toomanysecrets";
+  return user;
 }
 
 function jestTimeoutVSCodeIncrease() {

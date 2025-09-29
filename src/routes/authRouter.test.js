@@ -71,7 +71,7 @@ test("login admin user", async () => {
   const loginRes = await request(app).put("/api/auth").send(adminUser);
   expect(loginRes.status).toBe(200);
   expectValidJwt(loginRes.body.token);
-  const expectedUser = { ...adminUser, roles: [{ role: "admin" }] };
+  const expectedUser = adminUser;
   delete expectedUser.password;
   expect(loginRes.body.user).toMatchObject(expectedUser);
 });
