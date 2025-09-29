@@ -6,7 +6,6 @@ const {
   createAdminUser,
   randomName,
 } = require("../testhelper");
-const Test = require("supertest/lib/test");
 
 // Increase timeout for debugging in VSCode
 jestTimeoutVSCodeIncrease();
@@ -17,9 +16,6 @@ let adminUser;
 let adminUserAuthToken;
 let testFranchise;
 let testFranchiseId;
-let testFranchiseName = Math.random().toString(36).substring(2, 12);
-let testFranchiseEmail = testFranchiseName + "@test.com";
-let testStoreName = Math.random().toString(36).substring(2, 12);
 let testStore;
 let testStoreId;
 let createFranchiseRes;

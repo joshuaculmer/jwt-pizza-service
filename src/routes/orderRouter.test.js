@@ -5,7 +5,6 @@ const {
   expectValidJwt,
   createAdminUser,
 } = require("../testhelper");
-const Test = require("supertest/lib/test");
 
 // Increase timeout for debugging in VSCode
 jestTimeoutVSCodeIncrease();

@@ -1,19 +1,14 @@
 const request = require("supertest");
 const app = require("../service");
-const {
-  jestTimeoutVSCodeIncrease,
-  expectValidJwt,
-  randomUser,
-  createAdminUser,
-} = require("../testhelper");
+const { jestTimeoutVSCodeIncrease, expectValidJwt } = require("../testhelper");
 
 // Increase timeout for debugging in VSCode
 jestTimeoutVSCodeIncrease();
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
-const adminUser = createAdminUser();
-let adminUserAuthToken;
+// const adminUser = createAdminUser();
+// let adminUserAuthToken;
 
 beforeAll(async () => {
   // testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
