@@ -52,21 +52,22 @@ test("list users unauthorized", async () => {
   expect(listUsersRes.status).toBe(401);
 });
 
-test('list users', async () => {
+test("list users", async () => {
   const [user, userToken] = await registerUser(request(app));
   const listUsersRes = await request(app)
-    .get('/api/user')
-    .set('Authorization', 'Bearer ' + userToken);
+    .get("/api/user")
+    .set("Authorization", "Bearer " + userToken);
   expect(listUsersRes.status).toBe(200);
+  expect(user.name).toBe("pizza diner");
 });
 
 async function registerUser(service) {
   const testUser = {
-    name: 'pizza diner',
+    name: "pizza diner",
     email: `${randomName()}@test.com`,
-    password: 'a',
+    password: "a",
   };
-  const registerRes = await service.post('/api/auth').send(testUser);
+  const registerRes = await service.post("/api/auth").send(testUser);
   registerRes.body.user.password = testUser.password;
 
   return [registerRes.body.user, registerRes.body.token];
@@ -75,3 +76,13 @@ async function registerUser(service) {
 function randomName() {
   return Math.random().toString(36).substring(2, 12);
 }
+
+test("Delete user", async () => {
+  const userId = 1; // TODO: fix the hardcoded values for userId
+  const apiCall = `/api/user/${userId}`;
+  console.log(apiCall);
+  const deleteuserRes = await request(app)
+    .delete(apiCall)
+    .set("Authorization", `Bearer ${testUserAuthToken}`);
+  expect(deleteuserRes.status).toBe(200);
+});

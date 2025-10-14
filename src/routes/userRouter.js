@@ -52,6 +52,14 @@ userRouter.docs = [
       ],
     },
   },
+  {
+    method: "DELETE",
+    path: "api/user/:userId",
+    requiresAuth: true,
+    description: "Deletes a user with userId",
+    example: `curl -X DELETE localhost:3000/api/user/1 -H 'Authorization: Bearer tttttt'`,
+    response: {},
+  },
 ];
 
 // getUser
@@ -86,6 +94,24 @@ userRouter.get(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    res.json({});
+  })
+);
+
+// working here, pretty sure it does not work
+// deleteUser
+userRouter.delete(
+  "/:userId",
+  authRouter.authenticateToken,
+  asyncHandler(async (req, res) => {
+    const userId = Number(req.params.userId);
+    const user = req.user;
+    // TODO: add make sure that only admins can delete users
+    // if (user.id !== userId && !user.isRole(Role.Admin)) {
+    //   return res.status(403).json({ message: "unauthorized" });
+    // }
+
+    await DB.deleteUser(userId);
     res.json({});
   })
 );
