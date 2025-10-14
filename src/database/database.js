@@ -179,6 +179,20 @@ class DB {
     }
   }
 
+  async getListOfUsers(page = 1, limit = 10) {
+    const connection = await this.getConnection();
+    try {
+      const offset = this.getOffset(page, limit);
+      const users = await this.query(
+        connection,
+        `SELECT * FROM user LIMIT ${offset}, ${limit}`
+      );
+      return users;
+    } finally {
+      connection.end();
+    }
+  }
+
   async getOrders(user, page = 1) {
     const connection = await this.getConnection();
     try {
