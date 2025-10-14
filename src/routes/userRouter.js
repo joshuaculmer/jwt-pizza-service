@@ -112,9 +112,13 @@ userRouter.delete(
     // if (user.id !== userId && !user.isRole(Role.Admin)) {
     //   return res.status(403).json({ message: "unauthorized" });
     // }
-
-    await DB.deleteUser(userId);
-    res.json({});
+    try {
+      await DB.deleteUser(userId);
+      res.json({});
+    } catch (error) {
+      console.error("Delete user error:", error);
+      throw error;
+    }
   })
 );
 

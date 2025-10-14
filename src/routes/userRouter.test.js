@@ -141,3 +141,5 @@ test("Delete user", async () => {
     .set("Authorization", `Bearer ${testUserAuthToken}`);
   expect(deleteuserRes.status).toBe(200);
 });
+
+// TODO add a method to test error handling when deleting users that don't exist

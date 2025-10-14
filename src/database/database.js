@@ -150,7 +150,21 @@ class DB {
   async deleteUser(userId) {
     const connection = await this.getConnection();
     try {
-      await this.query(connection, `DELETE FROM user WHERE id=?`, [userId]);
+      // Delete user roles first (foreign key dependency)
+      await this.query(connection, `DELETE FROM userRole WHERE userId=?`, [
+        userId,
+      ]);
+
+      // Now delete the user
+      const result = await this.query(
+        connection,
+        `DELETE FROM user WHERE id=?`,
+        [userId]
+      );
+
+      if (result.affectedRows === 0) {
+        throw new Error(`User with id ${userId} not found`);
+      }
     } finally {
       connection.end();
     }
