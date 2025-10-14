@@ -7,6 +7,7 @@ jestTimeoutVSCodeIncrease();
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
+let testUserId;
 // const adminUser = createAdminUser();
 // let adminUserAuthToken;
 
@@ -14,6 +15,8 @@ beforeAll(async () => {
   // testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
   const registerRes = await request(app).post("/api/auth").send(testUser);
   testUserAuthToken = registerRes.body.token;
+  testUserId = registerRes.body.user.id;
+  console.log("testUserId: " + testUserId);
   expectValidJwt(testUserAuthToken);
 });
 
@@ -36,16 +39,24 @@ test("get me", async () => {
   });
 });
 
-test("update user not admin", async () => {
+test("update myself not admin", async () => {
   const newName = "updated name";
-  const userId = 1; // Assuming testUser has ID 1; adjust as necessary
+  const userId = testUserId;
+  console.log("Attempting to update userId:", userId);
+  console.log("With token:", testUserAuthToken?.substring(0, 20) + "...");
+
   const updateRes = await request(app)
     .put(`/api/user/${userId}`)
     .send({ name: newName })
     .set("Authorization", `Bearer ${testUserAuthToken}`);
-  expect(updateRes.status).toBe(403); // Expecting forbidden
-  expect(updateRes.body).toMatchObject({ message: "unauthorized" });
+
+  console.log("Update response status:", updateRes.status);
+  console.log("Update response body:", updateRes.body);
+
+  expect(updateRes.status).toBe(200);
 });
+
+// TODO make admin update user test
 
 test("list users unauthorized", async () => {
   const listUsersRes = await request(app).get("/api/user");
@@ -58,6 +69,7 @@ test("list users", async () => {
   const listUsersRes = await request(app)
     .get("/api/user")
     .set("Authorization", "Bearer " + userToken);
+  // console.log(listUsersRes.body);
   expect(listUsersRes.status).toBe(200);
   expect(listUsersRes.body.length).toBeGreaterThan(1);
 });
@@ -86,21 +98,21 @@ test("list users with pagination", async () => {
   const page1Res = await request(app)
     .get("/api/user?page=1&limit=2")
     .set("Authorization", "Bearer " + userToken);
-  
+
   // Get second page with limit of 2
   const page2Res = await request(app)
     .get("/api/user?page=2&limit=2")
     .set("Authorization", "Bearer " + userToken);
-  
+
   expect(page1Res.status).toBe(200);
   expect(page2Res.status).toBe(200);
-  
+
   // Ensure pages have different users
-  const page1Ids = page1Res.body.map(u => u.id);
-  const page2Ids = page2Res.body.map(u => u.id);
-  
+  const page1Ids = page1Res.body.map((u) => u.id);
+  const page2Ids = page2Res.body.map((u) => u.id);
+
   // No overlap between pages
-  const overlap = page1Ids.filter(id => page2Ids.includes(id));
+  const overlap = page1Ids.filter((id) => page2Ids.includes(id));
   expect(overlap.length).toBe(0);
 });
 
@@ -121,7 +133,7 @@ function randomName() {
 }
 
 test("Delete user", async () => {
-  const userId = 1; // TODO: fix the hardcoded values for userId
+  const userId = testUserId;
   const apiCall = `/api/user/${userId}`;
   console.log(apiCall);
   const deleteuserRes = await request(app)
