@@ -93,15 +93,14 @@ userRouter.get(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page);
+    const limit = parseInt(req.query.limit);
     const name = req.query.name || "*";
     const [users, more] = await DB.getListOfUsers(page, limit, name);
     res.json({ users, more });
   })
 );
 
-// working here, pretty sure it does not work
 // deleteUser
 userRouter.delete(
   "/:userId",
