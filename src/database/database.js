@@ -217,9 +217,9 @@ class DB {
       nameFilter = nameFilter.replace(/\*/g, "%");
       let users = await this.query(
         connection,
-        `SELECT * FROM user WHERE name LIKE ? LIMIT ${limit + 1} OFFSET ${
+        `SELECT * FROM user WHERE name LIKE ? LIMIT ${
           limit + 1
-        }`,
+        } OFFSET ${offset}`,
         [nameFilter]
       );
 
