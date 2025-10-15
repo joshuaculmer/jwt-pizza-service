@@ -95,8 +95,8 @@ userRouter.get(
   asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const users = await DB.getListOfUsers(page, limit);
-    res.json(users);
+    const [users, more] = await DB.getListOfUsers(page, limit);
+    res.json({ users, more });
   })
 );
 

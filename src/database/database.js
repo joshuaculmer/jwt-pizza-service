@@ -213,11 +213,17 @@ class DB {
     const connection = await this.getConnection();
     try {
       const offset = this.getOffset(page, limit);
-      const users = await this.query(
+      let users = await this.query(
         connection,
-        `SELECT * FROM user LIMIT ${offset}, ${limit}`
+        `SELECT * FROM user LIMIT ${offset}, ${limit + 1}`
       );
-      return users;
+
+      const more = users.length > limit;
+      if (more) {
+        users = users.slice(0, limit);
+      }
+
+      return [users, more];
     } finally {
       connection.end();
     }

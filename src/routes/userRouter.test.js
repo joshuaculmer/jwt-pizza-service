@@ -69,9 +69,10 @@ test("list users", async () => {
   const listUsersRes = await request(app)
     .get("/api/user")
     .set("Authorization", "Bearer " + userToken);
-  // console.log(listUsersRes.body);
+  console.log(listUsersRes.body.users);
   expect(listUsersRes.status).toBe(200);
-  expect(listUsersRes.body.length).toBeGreaterThan(1);
+  
+  expect(listUsersRes.body.users.length).toBeGreaterThan(1);
 });
 
 test("list users with limit", async () => {
@@ -80,7 +81,7 @@ test("list users with limit", async () => {
     .get("/api/user")
     .set("Authorization", "Bearer " + userToken);
 
-  const totalUsers = allUsersRes.body.length;
+  const totalUsers = allUsersRes.body.users.length;
 
   // Test with limit of 2
   const limitedUsersRes = await request(app)
@@ -88,7 +89,7 @@ test("list users with limit", async () => {
     .set("Authorization", "Bearer " + userToken);
 
   expect(limitedUsersRes.status).toBe(200);
-  expect(limitedUsersRes.body.length).toBe(Math.min(2, totalUsers));
+  expect(limitedUsersRes.body.users.length).toBe(Math.min(2, totalUsers));
 });
 
 test("list users with pagination", async () => {
@@ -108,8 +109,8 @@ test("list users with pagination", async () => {
   expect(page2Res.status).toBe(200);
 
   // Ensure pages have different users
-  const page1Ids = page1Res.body.map((u) => u.id);
-  const page2Ids = page2Res.body.map((u) => u.id);
+  const page1Ids = page1Res.body.users.map((u) => u.id);
+  const page2Ids = page2Res.body.users.map((u) => u.id);
 
   // No overlap between pages
   const overlap = page1Ids.filter((id) => page2Ids.includes(id));
