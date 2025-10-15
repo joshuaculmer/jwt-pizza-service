@@ -209,14 +209,29 @@ class DB {
     }
   }
 
-  async getListOfUsers(page = 1, limit = 10) {
+  async getListOfUsers(page = 1, limit = 10, nameFilter = "*") {
     const connection = await this.getConnection();
     try {
       const offset = this.getOffset(page, limit);
+
+      nameFilter = nameFilter.replace(/\*/g, "%");
       let users = await this.query(
         connection,
-        `SELECT * FROM user LIMIT ${offset}, ${limit + 1}`
+        `SELECT * FROM user WHERE name LIKE ? LIMIT ${limit + 1} OFFSET ${
+          limit + 1
+        }`,
+        [nameFilter]
       );
+
+      /*
+        await this.query(
+          connection,
+          `SELECT id, name FROM franchise WHERE name LIKE ? LIMIT ${
+            limit + 1
+          } OFFSET ${offset}`,
+          [nameFilter]
+        );
+      */
 
       const more = users.length > limit;
       if (more) {
