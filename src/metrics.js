@@ -16,46 +16,6 @@ function getMemoryUsagePercentage() {
   return memoryUsage.toFixed(2);
 }
 
-// function createMetric(
-//   metricName,
-//   metricValue,
-//   metricUnit,
-//   metricType,
-//   valueType,
-//   attributes
-// ) {
-//   attributes = { ...attributes, source: config.source };
-
-//   const metric = {
-//     name: metricName,
-//     unit: metricUnit,
-//     [metricType]: {
-//       dataPoints: [
-//         {
-//           [valueType]: metricValue,
-//           timeUnixNano: Date.now() * 1000000,
-//           attributes: [],
-//         },
-//       ],
-//     },
-//   };
-
-//   Object.keys(attributes).forEach((key) => {
-//     metric[metricType].dataPoints[0].attributes.push({
-//       key: key,
-//       value: { stringValue: attributes[key] },
-//     });
-//   });
-
-//   if (metricType === "sum") {
-//     metric[metricType].aggregationTemporality =
-//       "AGGREGATION_TEMPORALITY_CUMULATIVE";
-//     metric[metricType].isMonotonic = true;
-//   }
-
-//   return metric;
-// }
-
 function sendMetricToGrafana(metrics) {
   const body = {
     resourceMetrics: [
@@ -147,12 +107,24 @@ class OtelMetricBuilder {
   }
 }
 
-sendMetrics = function sendMetricsPeriodically(period) {
-  const timer = setInterval(() => {
+let pizzasPurchased = 0;
+let latency = 0;
+let pizzaRevenue = 0;
+let orderFailures = 0;
+let revenueLost = 0;
+
+function resetPurchaseMetrics() {
+  pizzasPurchased = 0;
+  latency = 0;
+  pizzaRevenue = 0;
+  orderFailures = 0;
+  revenueLost = 0;
+}
+
+function sendMetricsPeriodically(period) {
+  setInterval(() => {
     try {
       const metrics = new OtelMetricBuilder();
-
-      // metrics.add(httpMetrics);
 
       const systemMetrics = {
         cpuUsage: getCpuUsagePercentage(),
@@ -160,20 +132,55 @@ sendMetrics = function sendMetricsPeriodically(period) {
       };
       metrics.add(systemMetrics);
 
-      // metrics.add(userMetrics);
-      // metrics.add(purchaseMetrics);
-      // metrics.add(authMetrics);
+      const purchaseMetrics = {
+        pizzasPurchased: pizzasPurchased,
+        latency: latency,
+        pizzaRevenue: pizzaRevenue,
+        orderFailures: orderFailures,
+        revenueLost: revenueLost,
+      };
+      metrics.add(purchaseMetrics);
+      resetPurchaseMetrics();
 
       sendMetricToGrafana(metrics);
     } catch (error) {
       console.log("Error sending metrics", error);
     }
   }, period);
-};
+}
 
+function pizzaPurchase(success, pizzasOrdered, lat, orderRevenue) {
+  if (success) {
+    pizzasPurchased += pizzasOrdered;
+    pizzaRevenue += orderRevenue;
+  } else {
+    orderFailures += 1;
+    revenueLost += orderRevenue;
+  }
+  if (latency == null) {
+    latency = lat;
+  } else {
+    latency += lat;
+  }
+}
 
+// Example: app.use(metrics.requestTracker);
+
+// This function is used to track all the GET, POST, DELETE, PUT, and TOTAL requests
+// then send them to grafana
+function requestTracker() {
+  return (req, res, next) => {
+    const metrics = new OtelMetricBuilder();
+    const method = req.method.toLowerCase();
+    metrics.add({ [`requests_${method}`]: 1 });
+    metrics.add({ requests_total: 1 });
+    sendMetricToGrafana(metrics);
+    next();
+  };
+}
 
 module.exports = {
-  sendMetrics,
-  OtelMetricBuilder,
+  sendMetricsPeriodically,
+  pizzaPurchase,
+  requestTracker,
 };

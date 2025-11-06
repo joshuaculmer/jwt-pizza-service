@@ -3,6 +3,7 @@ const config = require("../config.js");
 const { Role, DB } = require("../database/database.js");
 const { authRouter } = require("./authRouter.js");
 const { asyncHandler, StatusCodeError } = require("../endpointHelper.js");
+const metrics = require("../metrics.js");
 
 const orderRouter = express.Router();
 
@@ -133,11 +134,15 @@ orderRouter.post(
     // talked with Danika on September 29th 2025
     if (r.ok) {
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
+      console.log(order);
+      metrics.pizzaPurchase(true, 2, 500, 0.001);
     } else {
       res.status(500).send({
         message: "Failed to fulfill order at factory",
         followLinkToEndChaos: j.reportUrl,
       });
+      console.log(order);
+      metrics.pizzaPurchase(false, 2, 5000, 0.001);
     }
   })
 );
