@@ -3,51 +3,6 @@ require("dotenv").config();
 const config = require("./config.js");
 const os = require("os");
 
-function getCpuUsagePercentage() {
-  const cpuUsage = os.loadavg()[0] / os.cpus().length;
-  return cpuUsage.toFixed(2) * 100;
-}
-
-function getMemoryUsagePercentage() {
-  const totalMemory = os.totalmem();
-  const freeMemory = os.freemem();
-  const usedMemory = totalMemory - freeMemory;
-  const memoryUsage = (usedMemory / totalMemory) * 100;
-  return memoryUsage.toFixed(2);
-}
-
-function sendMetricToGrafana(metrics) {
-  const body = {
-    resourceMetrics: [
-      {
-        scopeMetrics: [
-          {
-            metrics,
-          },
-        ],
-      },
-    ],
-  };
-
-  console.log(config.metrics.url);
-  fetch(`${config.metrics.url}`, {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {
-      Authorization: `Bearer ${config.metrics.apiKey}`,
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP status: ${response.status}`);
-      }
-    })
-    .catch((error) => {
-      console.error("Error pushing metrics:", error);
-    });
-}
-
 class OtelMetricBuilder {
   constructor() {
     this.metrics = [];
@@ -107,80 +62,194 @@ class OtelMetricBuilder {
   }
 }
 
-let pizzasPurchased = 0;
-let latency = 0;
-let pizzaRevenue = 0;
-let orderFailures = 0;
-let revenueLost = 0;
+class Metric {
+  constructor() {
+    // HTTP Request metrics
+    this.put = 0;
+    this.post = 0;
+    this.get = 0;
+    this.delete = 0;
+    this.totalRequests = 0;
 
-function resetPurchaseMetrics() {
-  pizzasPurchased = 0;
-  latency = 0;
-  pizzaRevenue = 0;
-  orderFailures = 0;
-  revenueLost = 0;
-}
+    // Pizza metrics
+    this.pizzasPurchased = 0;
+    this.pizzaRevenue = 0;
+    this.orderFailures = 0;
+    this.revenueLost = 0;
+    this.latency = 0;
 
-function sendMetricsPeriodically(period) {
-  setInterval(() => {
-    try {
-      const metrics = new OtelMetricBuilder();
+    // User and authentication
+    this.activeUsers = 0;
+    this.successfulAuth = 0;
+    this.failedAuth = 0;
+  }
 
-      const systemMetrics = {
-        cpuUsage: getCpuUsagePercentage(),
-        memoryUsage: getMemoryUsagePercentage(),
-      };
-      metrics.add(systemMetrics);
+  // CPU and Memory
+  getCpuUsagePercentage() {
+    const cpuUsage = os.loadavg()[0] / os.cpus().length;
+    return cpuUsage.toFixed(2) * 100;
+  }
+  getMemoryUsagePercentage() {
+    const totalMemory = os.totalmem();
+    const freeMemory = os.freemem();
+    const usedMemory = totalMemory - freeMemory;
+    const memoryUsage = (usedMemory / totalMemory) * 100;
+    return memoryUsage.toFixed(2);
+  }
 
-      const purchaseMetrics = {
-        pizzasPurchased: pizzasPurchased,
-        latency: latency,
-        pizzaRevenue: pizzaRevenue,
-        orderFailures: orderFailures,
-        revenueLost: revenueLost,
-      };
-      metrics.add(purchaseMetrics);
-      resetPurchaseMetrics();
+  // HTTP request metrics
+  incrementTotalRequests() {
+    this.totalRequests += 1;
+  }
+  incrementPostRequest() {
+    this.incrementTotalRequests();
+    this.post += 1;
+  }
+  incrementDeleteRequest() {
+    this.incrementTotalRequests();
+    this.delete += 1;
+  }
+  incrementPutRequest() {
+    this.incrementTotalRequests();
+    this.put += 1;
+  }
+  incrementGetRequest() {
+    this.incrementTotalRequests();
+    this.get += 1;
+  }
 
-      sendMetricToGrafana(metrics);
-    } catch (error) {
-      console.log("Error sending metrics", error);
+  // User metrics
+  incrementActiveUsers() {
+    this.activeUsers += 1;
+  }
+  decrementActiveUsers() {
+    this.activeUsers -= 1;
+  }
+  incrementSuccessfulAuth() {
+    this.successfulAuth += 1;
+  }
+  incrementFailedAuth() {
+    this.failedAuth += 1;
+  }
+
+  // Resets all Metrics
+  resetMetrics() {
+    this.pizzasPurchased = 0;
+    this.latency = 0;
+    this.pizzaRevenue = 0;
+    this.orderFailures = 0;
+    this.revenueLost = 0;
+  }
+
+  // Send one metric to Grafana
+  sendMetricToGrafana(metrics) {
+    const body = {
+      resourceMetrics: [
+        {
+          scopeMetrics: [
+            {
+              metrics,
+            },
+          ],
+        },
+      ],
+    };
+
+    console.log(config.metrics.url);
+    fetch(`${config.metrics.url}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        Authorization: `Bearer ${config.metrics.apiKey}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP status: ${response.status}`);
+        }
+      })
+      .catch((error) => {
+        console.error("Error pushing metrics:", error);
+      });
+  }
+
+  // Send metrics every _period_ milliseconds
+  sendMetricsPeriodically(period) {
+    setInterval(() => {
+      try {
+        const metrics = new OtelMetricBuilder();
+
+        const systemMetrics = {
+          cpuUsage: this.getCpuUsagePercentage(),
+          memoryUsage: this.getMemoryUsagePercentage(),
+        };
+
+        const purchaseMetrics = {
+          pizzasPurchased: this.pizzasPurchased,
+          latency: this.latency,
+          pizzaRevenue: this.pizzaRevenue,
+          orderFailures: this.orderFailures,
+          revenueLost: this.revenueLost,
+        };
+
+        const requestMetrics = {
+          GET_requests: this.get,
+          POST_requests: this.post,
+          PUT_requests: this.put,
+          DELETE_requests: this.delete,
+          TOTAL_requests: this.totalRequests,
+        };
+
+        const userMetrics = {
+          activeUsers: this.activeUsers,
+          authSuccess: this.successfulAuth,
+          authFailure: this.failedAuth,
+        };
+
+        metrics.add(systemMetrics);
+        metrics.add(purchaseMetrics);
+        metrics.add(requestMetrics);
+        metrics.add(userMetrics);
+
+        this.resetMetrics();
+
+        this.sendMetricToGrafana(metrics);
+      } catch (error) {
+        console.log("Error sending metrics", error);
+      }
+    }, period);
+  }
+
+  // record metrics associated with a pizza purchase
+  pizzaPurchase(success, pizzasOrdered, lat, orderRevenue) {
+    if (success) {
+      this.pizzasPurchased += pizzasOrdered;
+      this.pizzaRevenue += orderRevenue;
+    } else {
+      this.orderFailures += 1;
+      this.revenueLost += orderRevenue;
     }
-  }, period);
-}
-
-function pizzaPurchase(success, pizzasOrdered, lat, orderRevenue) {
-  if (success) {
-    pizzasPurchased += pizzasOrdered;
-    pizzaRevenue += orderRevenue;
-  } else {
-    orderFailures += 1;
-    revenueLost += orderRevenue;
-  }
-  if (latency == null) {
-    latency = lat;
-  } else {
-    latency += lat;
+    if (this.latency == null) {
+      this.latency = lat;
+    } else {
+      this.latency += lat;
+    }
   }
 }
 
-// Example: app.use(metrics.requestTracker);
-
-// This function is used to track all the GET, POST, DELETE, PUT, and TOTAL requests
-// then send them to grafana
-function requestTracker() {
-  return (req, res, next) => {
-    const metrics = new OtelMetricBuilder();
-    const method = req.method.toLowerCase();
-    metrics.add({ [`requests_${method}`]: 1 });
-    metrics.add({ requests_total: 1 });
-    sendMetricToGrafana(metrics);
-    next();
-  };
-}
+// middle man idea that I'm abandoning for my faster uglier solution
+// function requestTracker() {
+//   return (req, res, next) => {
+//     const metrics = new OtelMetricBuilder();
+//     const method = req.method.toLowerCase();
+//     metrics.add({ [`requests_${method}`]: 1 });
+//     metrics.add({ requests_total: 1 });
+//     sendMetricToGrafana(metrics);
+//     next();
+//   };
+// }
 
 module.exports = {
-  sendMetricsPeriodically,
-  pizzaPurchase,
-  requestTracker,
+  Metric,
 };

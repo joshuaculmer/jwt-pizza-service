@@ -2,6 +2,9 @@ const express = require("express");
 const { asyncHandler } = require("../endpointHelper.js");
 const { DB, Role } = require("../database/database.js");
 const { authRouter, setAuth } = require("./authRouter.js");
+const { Metric } = require("../metrics.js");
+
+const metric = new Metric();
 
 const userRouter = express.Router();
 
@@ -67,6 +70,7 @@ userRouter.get(
   "/me",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementGetRequest();
     res.json(req.user);
   })
 );
@@ -76,6 +80,7 @@ userRouter.put(
   "/:userId",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementPutRequest();
     let { name, email, password } = req.body;
     const userId = Number(req.params.userId);
     const user = req.user;
@@ -93,6 +98,7 @@ userRouter.get(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementGetRequest();
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 10;
     const name = req.query.name || "*";
@@ -106,6 +112,7 @@ userRouter.delete(
   "/:userId",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementDeleteRequest();
     const userId = Number(req.params.userId);
     // const user = req.user;
     // TODO: add make sure that only admins can delete users

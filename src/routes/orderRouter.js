@@ -3,8 +3,9 @@ const config = require("../config.js");
 const { Role, DB } = require("../database/database.js");
 const { authRouter } = require("./authRouter.js");
 const { asyncHandler, StatusCodeError } = require("../endpointHelper.js");
-const metrics = require("../metrics.js");
+const { Metric } = require("../metrics.js");
 
+const metric = new Metric();
 const orderRouter = express.Router();
 
 orderRouter.docs = [
@@ -81,6 +82,7 @@ orderRouter.docs = [
 orderRouter.get(
   "/menu",
   asyncHandler(async (req, res) => {
+    metric.incrementGetRequest();
     res.send(await DB.getMenu());
   })
 );
@@ -90,6 +92,7 @@ orderRouter.put(
   "/menu",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementPutRequest();
     if (!req.user.isRole(Role.Admin)) {
       throw new StatusCodeError("unable to add menu item", 403);
     }
@@ -105,6 +108,7 @@ orderRouter.get(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementGetRequest();
     res.json(await DB.getOrders(req.user, req.query.page));
   })
 );
@@ -114,6 +118,7 @@ orderRouter.post(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    metric.incrementPostRequest();
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
     const r = await fetch(`${config.factory.url}/api/order`, {
