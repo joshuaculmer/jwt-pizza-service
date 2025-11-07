@@ -82,7 +82,6 @@ orderRouter.docs = [
 orderRouter.get(
   "/menu",
   asyncHandler(async (req, res) => {
-    metric.incrementGetRequest();
     res.send(await DB.getMenu());
   })
 );
@@ -92,7 +91,6 @@ orderRouter.put(
   "/menu",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementPutRequest();
     if (!req.user.isRole(Role.Admin)) {
       throw new StatusCodeError("unable to add menu item", 403);
     }
@@ -108,7 +106,6 @@ orderRouter.get(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementGetRequest();
     res.json(await DB.getOrders(req.user, req.query.page));
   })
 );
@@ -118,8 +115,8 @@ orderRouter.post(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementPostRequest();
     const orderReq = req.body;
+    const startTime = Date.now();
     const order = await DB.addDinerOrder(req.user, orderReq);
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: "POST",
@@ -140,14 +137,15 @@ orderRouter.post(
     if (r.ok) {
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
       console.log(order);
-      metric.pizzaPurchase(true, 2, 500, 0.001);
+
+      metric.pizzaPurchase(true, order.items, Date.now() - startTime);
     } else {
       res.status(500).send({
         message: "Failed to fulfill order at factory",
         followLinkToEndChaos: j.reportUrl,
       });
       console.log(order);
-      metric.pizzaPurchase(false, 2, 5000, 0.001);
+      metric.pizzaPurchase(false, order.items, Date.now() - startTime);
     }
   })
 );

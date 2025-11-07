@@ -73,7 +73,7 @@ authRouter.authenticateToken = (req, res, next) => {
     metric.incrementFailedAuth();
     return res.status(401).send({ message: "unauthorized" });
   }
-  metric.incrementSuccessfulAuth();;
+  metric.incrementSuccessfulAuth();
   next();
 };
 
@@ -81,7 +81,6 @@ authRouter.authenticateToken = (req, res, next) => {
 authRouter.post(
   "/",
   asyncHandler(async (req, res) => {
-    metric.incrementPostRequest();
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res
@@ -96,6 +95,7 @@ authRouter.post(
     });
     const auth = await setAuth(user);
     res.json({ user: user, token: auth });
+    metric.incrementSuccessfulAuth();
   })
 );
 
@@ -103,11 +103,11 @@ authRouter.post(
 authRouter.put(
   "/",
   asyncHandler(async (req, res) => {
-    metric.incrementPutRequest();
     const { email, password } = req.body;
     const user = await DB.getUser(email, password);
     const auth = await setAuth(user);
     res.json({ user: user, token: auth });
+    metric.incrementSuccessfulAuth();
   })
 );
 
@@ -116,7 +116,6 @@ authRouter.delete(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementDeleteRequest();
     await clearAuth(req);
     res.json({ message: "logout successful" });
   })
@@ -125,6 +124,7 @@ authRouter.delete(
 async function setAuth(user) {
   const token = jwt.sign(user, config.jwtSecret);
   await DB.loginUser(user.id, token);
+  metric.incrementActiveUsers();
   return token;
 }
 
@@ -132,6 +132,7 @@ async function clearAuth(req) {
   const token = readAuthToken(req);
   if (token) {
     await DB.logoutUser(token);
+    metric.decrementActiveUsers();
   }
 }
 

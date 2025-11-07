@@ -2,11 +2,8 @@ const express = require("express");
 const { DB, Role } = require("../database/database.js");
 const { authRouter } = require("./authRouter.js");
 const { StatusCodeError, asyncHandler } = require("../endpointHelper.js");
-const { Metric } = require("../metrics.js");
 
 const franchiseRouter = express.Router();
-
-const metric = new Metric();
 
 franchiseRouter.docs = [
   {
@@ -83,7 +80,6 @@ franchiseRouter.docs = [
 franchiseRouter.get(
   "/",
   asyncHandler(async (req, res) => {
-    metric.incrementGetRequest();
     const [franchises, more] = await DB.getFranchises(
       req.user,
       req.query.page,
@@ -99,7 +95,6 @@ franchiseRouter.get(
   "/:userId",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementGetRequest();
     let result = [];
     const userId = Number(req.params.userId);
     if (req.user.id === userId || req.user.isRole(Role.Admin)) {
@@ -115,7 +110,6 @@ franchiseRouter.post(
   "/",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementPostRequest();
     if (!req.user.isRole(Role.Admin)) {
       throw new StatusCodeError("unable to create a franchise", 403);
     }
@@ -129,7 +123,6 @@ franchiseRouter.post(
 franchiseRouter.delete(
   "/:franchiseId",
   asyncHandler(async (req, res) => {
-    metric.incrementDeleteRequest();
     // if (
     //   !req.user.isRole(Role.Admin) &&
     //   !franchise.admins.some((admin) => admin.id === req.user.id)
@@ -147,7 +140,6 @@ franchiseRouter.post(
   "/:franchiseId/store",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementPostRequest();
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
     if (
@@ -167,7 +159,6 @@ franchiseRouter.delete(
   "/:franchiseId/store/:storeId",
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
-    metric.incrementDeleteRequest();
     const franchiseId = Number(req.params.franchiseId);
     const franchise = await DB.getFranchise({ id: franchiseId });
     if (
