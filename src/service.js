@@ -6,6 +6,7 @@ const userRouter = require("./routes/userRouter.js");
 const version = require("./version.json");
 const config = require("./config.js");
 const { Metric } = require("./metrics.js");
+const Logger = require("./logger.js");
 
 const metric = new Metric();
 
@@ -13,6 +14,7 @@ const app = express();
 app.use(express.json());
 app.use(setAuthUser);
 app.use(metric.requestTracker);
+app.use(Logger.httpLogger);
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");

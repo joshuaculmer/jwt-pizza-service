@@ -4,6 +4,7 @@ const { Role, DB } = require("../database/database.js");
 const { authRouter } = require("./authRouter.js");
 const { asyncHandler, StatusCodeError } = require("../endpointHelper.js");
 const { Metric } = require("../metrics.js");
+const Logger = require("../logger.js");
 
 const metric = new Metric();
 const orderRouter = express.Router();
@@ -92,6 +93,7 @@ orderRouter.put(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     if (!req.user.isRole(Role.Admin)) {
+      Logger.log(403, "Error", { userId: req.user.id, message: "Unauthorized attempt to add menu item" });
       throw new StatusCodeError("unable to add menu item", 403);
     }
 
@@ -118,7 +120,7 @@ orderRouter.post(
     const orderReq = req.body;
     const startTime = Date.now();
     const order = await DB.addDinerOrder(req.user, orderReq);
-    const r = await fetch(`${config.factory.url}/api/order`, {
+    const factoryOrder = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -128,7 +130,9 @@ orderRouter.post(
         diner: { id: req.user.id, name: req.user.name, email: req.user.email },
         order,
       }),
-    });
+    };
+    Logger.log(200, "FactoryOrder", factoryOrder);
+    const r = await fetch(`${config.factory.url}/api/order`, factoryOrder);
     const j = await r.json();
     // console.log("j:" + j.reportUrl + " " + j.jwt);
     // console.log("r:" + r.ok);
@@ -136,15 +140,16 @@ orderRouter.post(
     // talked with Danika on September 29th 2025
     if (r.ok) {
       res.send({ order, followLinkToEndChaos: j.reportUrl, jwt: j.jwt });
-      console.log(order);
-
+      // console.log(order);
+      Logger.log(200, "FactoryResponse", { "Jwt created": true });
       metric.pizzaPurchase(true, order.items, Date.now() - startTime);
     } else {
       res.status(500).send({
         message: "Failed to fulfill order at factory",
         followLinkToEndChaos: j.reportUrl,
       });
-      console.log(order);
+      Logger.log(500, "FactoryResponse", { "Jwt created": false });
+      // console.log(order);
       metric.pizzaPurchase(false, order.items, Date.now() - startTime);
     }
   })

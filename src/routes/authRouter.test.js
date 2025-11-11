@@ -37,6 +37,13 @@ test("login", async () => {
   expect(loginRes.body.user).toMatchObject(expectedUser);
 });
 
+test("login with wrong password fails", async () => {
+  const loginRes = await request(app)
+    .put("/api/auth")
+    .send({ email: testUser.email, password: "wrongpassword" });
+  expect(loginRes.status).toBe(404);
+});
+
 test("register", async () => {
   const registerRes = await request(app).post("/api/auth").send(randomUser());
   expect(registerRes.status).toBe(200);
