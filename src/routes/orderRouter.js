@@ -87,10 +87,14 @@ orderRouter.put(
   asyncHandler(async (req, res) => {
     if (req.user.isRole(Role.Admin)) {
       enableChaos = req.params.state === "true";
+      Logger.log(200, "ChaosChange", {
+        userId: req.user.id,
+        chaosEnabled: enableChaos,
+      });
     }
-    // else {
-    //   console.log("was not an admin");
-    // }
+    else {
+      console.log("was not an admin");
+    }
     res.json({ chaos: enableChaos });
   })
 );
