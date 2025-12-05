@@ -84,6 +84,12 @@ class Metric {
     this.activeUsers = 0; // gauge
     this.successfulAuth = 0; // sum
     this.failedAuth = 0; // sum
+    this.chaosEnabled = false;
+  }
+
+  reportChaos(state) {
+    this.chaosEnabled = state;
+    this.sendSingleMetric({ chaosEnabled: this.chaosEnabled });
   }
 
   // Middle man solution

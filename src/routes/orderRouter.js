@@ -77,6 +77,15 @@ orderRouter.docs = [
       jwt: "1111111111",
     },
   },
+  {
+    method: "PUT",
+    path: "/api/order/chaos/:state",
+    requiresAuth: true,
+    description:
+      "Enable or disable chaos monkey (admin only). State is 'true' or 'false'",
+    example: `curl -X PUT localhost:3000/api/order/chaos/true  -H 'Authorization: Bearer tttttt'`,
+    response: { chaos: true },
+  },
 ];
 
 // TODO move to another more appropriate file
@@ -91,8 +100,8 @@ orderRouter.put(
         userId: req.user.id,
         chaosEnabled: enableChaos,
       });
-    }
-    else {
+      metric.reportChaos(enableChaos);
+    } else {
       console.log("was not an admin");
     }
     res.json({ chaos: enableChaos });
