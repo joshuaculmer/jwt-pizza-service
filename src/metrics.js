@@ -84,7 +84,7 @@ class Metric {
     this.activeUsers = 0; // gauge
     this.successfulAuth = 0; // sum
     this.failedAuth = 0; // sum
-    this.chaosEnabled = false;
+    this.chaosEnabled = false; // gauge
   }
 
   reportChaos(state) {
@@ -192,6 +192,8 @@ class Metric {
         };
 
         metrics.add(systemMetrics);
+        const chaosMetrics = { chaosEnabled: this.chaosEnabled };
+        metrics.add(chaosMetrics);
         // metrics.add({ activeUsers: this.activeUsers });
 
         this.sendMetricToGrafana(metrics);
