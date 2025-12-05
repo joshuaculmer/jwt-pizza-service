@@ -8,7 +8,6 @@ const Logger = require("../logger.js");
 
 class DB {
   constructor() {
-    this.resetuserdatabase();
     this.initialized = this.initializeDatabase();
     this.log = Logger;
   }
@@ -528,14 +527,6 @@ class DB {
     return connection;
   }
 
-  async resetuserdatabase() {
-    // clear the database
-    const connection = await this._getConnection(false);
-    const sql_command = "TRUNCATE TABLE user";
-
-    // initializeDatabase
-    this.initializeDatabase();
-  }
   async initializeDatabase() {
     try {
       const connection = await this._getConnection(false);

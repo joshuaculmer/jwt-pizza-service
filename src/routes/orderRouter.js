@@ -79,6 +79,29 @@ orderRouter.docs = [
   },
 ];
 
+// TODO move to another more appropriate file
+let enableChaos = false;
+orderRouter.put(
+  "/chaos/:state",
+  authRouter.authenticateToken,
+  asyncHandler(async (req, res) => {
+    if (req.user.isRole(Role.Admin)) {
+      enableChaos = req.params.state === "true";
+    }
+    // else {
+    //   console.log("was not an admin");
+    // }
+    res.json({ chaos: enableChaos });
+  })
+);
+
+orderRouter.post("/", (req, res, next) => {
+  if (enableChaos && Math.random() < 0.5) {
+    throw new StatusCodeError("Chaos monkey", 500);
+  }
+  next();
+});
+
 // getMenu
 orderRouter.get(
   "/menu",
@@ -93,7 +116,10 @@ orderRouter.put(
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
     if (!req.user.isRole(Role.Admin)) {
-      Logger.log(403, "Error", { userId: req.user.id, message: "Unauthorized attempt to add menu item" });
+      Logger.log(403, "Error", {
+        userId: req.user.id,
+        message: "Unauthorized attempt to add menu item",
+      });
       throw new StatusCodeError("unable to add menu item", 403);
     }
 
