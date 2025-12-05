@@ -8,6 +8,7 @@ const Logger = require("../logger.js");
 
 class DB {
   constructor() {
+    this.resetuserdatabase();
     this.initialized = this.initializeDatabase();
     this.log = Logger;
   }
@@ -92,7 +93,10 @@ class DB {
         !user ||
         (password && !(await bcrypt.compare(password, user.password)))
       ) {
-        Logger.log(404, "Error", { email: email, message: "User not found or incorrect password for GetUser" });
+        Logger.log(404, "Error", {
+          email: email,
+          message: "User not found or incorrect password for GetUser",
+        });
         throw new StatusCodeError("unknown user", 404);
       }
 
@@ -167,7 +171,10 @@ class DB {
       );
 
       if (result.affectedRows === 0) {
-        Logger.log(404, "Error", { userId: userId, message: "User not found for Delete User" });
+        Logger.log(404, "Error", {
+          userId: userId,
+          message: "User not found for Delete User",
+        });
         throw new Error(`User with id ${userId} not found`);
       }
     } finally {
@@ -294,7 +301,10 @@ class DB {
           [admin.email]
         );
         if (adminUser.length == 0) {
-          Logger.log(404, "Error", { email: admin.email, message: "Admin user not provided for creating a franchise" });
+          Logger.log(404, "Error", {
+            email: admin.email,
+            message: "Admin user not provided for creating a franchise",
+          });
           throw new StatusCodeError(
             `unknown user for franchise admin ${admin.email} provided`,
             404
@@ -342,7 +352,10 @@ class DB {
         await connection.commit();
       } catch {
         await connection.rollback();
-        Logger.log(500, "Error", { franchiseId: franchiseId, message: "Unable to delete franchise" });
+        Logger.log(500, "Error", {
+          franchiseId: franchiseId,
+          message: "Unable to delete franchise",
+        });
         throw new StatusCodeError("unable to delete franchise", 500);
       }
     } finally {
@@ -515,6 +528,14 @@ class DB {
     return connection;
   }
 
+  async resetuserdatabase() {
+    // clear the database
+    const connection = await this._getConnection(false);
+    const sql_command = "TRUNCATE TABLE user";
+
+    // initializeDatabase
+    this.initializeDatabase();
+  }
   async initializeDatabase() {
     try {
       const connection = await this._getConnection(false);
@@ -540,8 +561,8 @@ class DB {
         if (!dbExists) {
           const defaultAdmin = {
             name: "常用名字",
-            email: "a@jwt.com",
-            password: "admin",
+            email: process.env.ADMIN_EMAIL,
+            password: process.env.ADMIN_PASSWORD,
             roles: [{ role: Role.Admin }],
           };
           this.addUser(defaultAdmin);
