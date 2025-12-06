@@ -89,7 +89,7 @@ class Metric {
 
   reportChaos(state) {
     this.chaosEnabled = state;
-    this.sendSingleMetric({ chaosEnabled: this.chaosEnabled });
+    this.sendSingleMetric({ chaosEnabled: this.chaosEnabled }, "gauge");
   }
 
   // Middle man solution
@@ -192,7 +192,12 @@ class Metric {
         };
 
         metrics.add(systemMetrics);
-        const chaosMetrics = { chaosEnabled: this.chaosEnabled };
+        let chaosMetrics;
+        if (this.chaosEnabled) {
+          chaosMetrics = { chaosEnabled: 1 };
+        } else {
+          chaosMetrics = { chaosEnabled: 0 };
+        }
         metrics.add(chaosMetrics);
         // metrics.add({ activeUsers: this.activeUsers });
 
